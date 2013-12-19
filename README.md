@@ -47,13 +47,13 @@ The Fields
 
 Searches are determined by the 'q' parameter.  Following that is a parenthesis enclosed list of key:value pairs, separated by commas.
 
-> ex: q=(name:Jonhson,city:Oklahoma)
+> ex: q=(city:Exeter,title:Property 1)
 
 **Partial Responses**
 
 Partial responses are used to only return certain explicit fields from a record. They are determined by the 'fields' paramter, which is a list of field names separated by commas, enclosed in parenthesis.
 
-> ex: fields=(id,name,location)
+> ex: fields=(id,title,location)
 
 **Limit and Offset**
 
@@ -85,26 +85,15 @@ All route controllers must return an array.  This array is used to create the re
 JSON is the default response type.  It comes with an envelope wrapper, so responses will look like this:
 
 ```
-GET /v1/example?q=(popular:true)&offset=1&limit=2&fields=(name,location,prince)
+GET /v1/properties?q=(city:exeter)&offset=1&limit=2&fields=(name,location,prince)
 
 {
-    "_meta": {
-        "count": 2,
-        "status": "SUCCESS"
-    },
-    "records": [
-        {
-            "location": "Pride Rock",
-            "name": "Nala",
-            "prince": "Simba"
-        },
-        {
-            "location": "Castle",
-            "name": "Sleeping Beauty",
-            "prince": "Charming"
-        }
-    ]
-}
+    "_meta":{"status":"SUCCESS","count":2,"type":"application\/json"},
+    "_state":{"limit":null,"offset":null,"sort":"title","direction":"asc"},
+    "records":[
+        {"id":"1","title":"Property 1","type":"Flat","city":"Exeter"},
+        {"id":"2","title":"Property 2","type":"House","city":"Exeter"}]
+    }
 ```
 
 The envelope can be suppressed for responses via the 'envelope=false' query paramter.  This will return just the record set by itself as the body, and the meta information via X- headers.
@@ -120,9 +109,8 @@ This can be turned off for your API by setting the JSONResponse's function "conv
 CSV is the other implemented handler.  It uses the first record's keys as the header row, and then creates a csv from each row in the array.  The header row can be toggled off for responses.
 
 ```
-name,location,princeName
-Nala,"Pride Rock",Simba
-"Sleeping Beauty",Castle,Charming
+title,type,city
+Property 1, Flat, Exeter
 ```
 
 Errors
@@ -159,23 +147,6 @@ Returns this:
     }
 }
 ```
-
-
-Example Controller
--------------------
-
-The Example Controller sets up a route at /example and implements all of the above query parameters.
-You can mix and match any of these queries:
-
->  api.example.local/v1/example?q=(name:Belle)
-
->  api.example.local/v1/example?fields=(name,location)
-
->  api.example.local/v1/example/5?fields=(name)&envelope=false
-
->  api.example.local/v1/example?type=csv
-
->  api.example.local/v1/example?q=(popular:true)&offset=1&limit=2&type=csv&fields=(name,location)
 
 [phalcon]: http://phalconphp.com/index
 [phalconDocs]: http://docs.phalconphp.com/en/latest/
