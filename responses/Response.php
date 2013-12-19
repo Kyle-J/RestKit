@@ -1,5 +1,5 @@
 <?php
-namespace PhalconRest\Responses;
+namespace OrganicRest\Responses;
 
 class Response extends \Phalcon\DI\Injectable{
 

@@ -1,5 +1,5 @@
 <?php
-namespace PhalconRest\Controllers;
+namespace OrganicRest\Controllers;
 
 /**
  *  \Phalcon\Mvc\Controller has a final __construct() method, so we can't

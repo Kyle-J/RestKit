@@ -1,21 +1,19 @@
 <?php
 
-use Phalcon\DI\FactoryDefault as DefaultDI,
-	Phalcon\Mvc\Micro\Collection,
-	Phalcon\Config\Adapter\Ini as IniConfig,
-	Phalcon\Loader;
+use Phalcon\Mvc\Micro\Collection,
+	Phalcon\Config\Adapter\Ini as IniConfig;
 
 /**
  * By default, namespaces are assumed to be the same as the path.
  * This function allows us to assign namespaces to alternative folders.
  * It also puts the classes into the PSR-0 autoLoader.
  */
-$loader = new Loader();
+$loader = new \Phalcon\Loader();
 $loader->registerNamespaces(array(
-	'PhalconRest\Models' => __DIR__ . '/models/',
-	'PhalconRest\Controllers' => __DIR__ . '/controllers/',
-	'PhalconRest\Exceptions' => __DIR__ . '/exceptions/',
-	'PhalconRest\Responses' => __DIR__ . '/responses/'
+	'OrganicRest\Models' => __DIR__ . '/models/',
+	'OrganicRest\Controllers' => __DIR__ . '/controllers/',
+	'OrganicRest\Exceptions' => __DIR__ . '/exceptions/',
+	'OrganicRest\Responses' => __DIR__ . '/responses/'
 ))->register();
 
 /**
@@ -23,7 +21,7 @@ $loader->registerNamespaces(array(
  * and we will insert it into all of our controllers.
  * @var DefaultDI
  */
-$di = new DefaultDI();
+$di = new \Phalcon\DI\FactoryDefault();
 
 
 /**
@@ -68,10 +66,14 @@ $di->set('modelsCache', function() {
 /**
  * Database setup.  Here, we'll use a simple SQLite database of Disney Princesses.
  */
+//Set up the database service
 $di->set('db', function(){
-	return new \Phalcon\Db\Adapter\Pdo\Sqlite(array(
-		'data/database.sqlite'
-	));
+    return new \Phalcon\Db\Adapter\Pdo\Mysql(array(
+        "host" => "localhost",
+        "username" => "root",
+        "password" => "vodofx",
+        "dbname" => "properties"
+    ));
 });
 
 /**
@@ -136,7 +138,7 @@ $app->before(function() use ($app, $di) {
 
 	// Basic auth, for programmatic responses
 	if($app->request->getServer('PHP_AUTH_USER')){
-		$user = new \PhalconRest\Controllers\UsersController();
+		$user = new \OrganicRest\Controllers\UsersController();
 		$user->login(
 			$app->request->getServer('PHP_AUTH_USER'),
 			$app->request->getServer('PHP_AUTH_PW')
@@ -164,7 +166,7 @@ $app->before(function() use ($app, $di) {
 	}
 
 	// If we made it this far, we have no valid auth method, throw a 401.
-	throw new \PhalconRest\Exceptions\HTTPException(
+	throw new \OrganicRest\Exceptions\HTTPException(
 		'Must login or provide credentials.',
 		401,
 		array(
@@ -223,7 +225,7 @@ $app->after(function() use ($app) {
 		// Results returned from the route's controller.  All Controllers should return an array
 		$records = $app->getReturnedValue();
 
-		$response = new \PhalconRest\Responses\JSONResponse();
+		$response = new \OrganicRest\Responses\JSONResponse();
 		$response->useEnvelope(true) //this is default behavior
 			->convertSnakeCase(true) //this is also default behavior
 			->send($records);
@@ -233,13 +235,13 @@ $app->after(function() use ($app) {
 	else if($app->request->get('type') == 'csv'){
 
 		$records = $app->getReturnedValue();
-		$response = new \PhalconRest\Responses\CSVResponse();
+		$response = new \OrganicRest\Responses\CSVResponse();
 		$response->useHeaderRow(true)->send($records);
 
 		return;
 	}
 	else {
-		throw new \PhalconRest\Exceptions\HTTPException(
+		throw new \OrganicRest\Exceptions\HTTPException(
 			'Could not return results in specified format',
 			403,
 			array(
@@ -256,7 +258,7 @@ $app->after(function() use ($app) {
  * We set a 404 here unless there's a suppress error codes.
  */
 $app->notFound(function () use ($app) {
-	throw new \PhalconRest\Exceptions\HTTPException(
+	throw new \OrganicRest\Exceptions\HTTPException(
 		'Not Found.',
 		404,
 		array(
@@ -274,7 +276,7 @@ $app->notFound(function () use ($app) {
  */
 set_exception_handler(function($exception) use ($app){
 	//HTTPException's send method provides the correct response headers and body
-	if(is_a($exception, 'PhalconRest\\Exceptions\\HTTPException')){
+	if(is_a($exception, 'OrganicRest\\Exceptions\\HTTPException')){
 		$exception->send();
 	}
 	error_log($exception);

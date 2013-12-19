@@ -1,4 +1,4 @@
-PhalconRest
+OrganicRest
 ===========
 
 A base project for APIs using the [Phalcon][phalcon] framework
@@ -128,11 +128,11 @@ Nala,"Pride Rock",Simba
 Errors
 -------
 
-PhalconRest\Exception\HTTPException extends PHP's native exceptions.  Throwing this type of exception 
+OrganicRest\Exception\HTTPException extends PHP's native exceptions.  Throwing this type of exception
 returns a nicely formatted JSON response to the client.
 
 ```
-throw new \PhalconRest\Exceptions\HTTPException(
+throw new \OrganicRest\Exceptions\HTTPException(
 	'Could not return results in specified format',
 	403,
 	array(

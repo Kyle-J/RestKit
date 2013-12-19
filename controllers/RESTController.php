@@ -1,6 +1,6 @@
 <?php
-namespace PhalconRest\Controllers;
-use \PhalconRest\Exceptions\HTTPException;
+namespace OrganicRest\Controllers;
+use \OrganicRest\Exceptions\HTTPException;
 
 /**
  * Base RESTful Controller.
@@ -15,7 +15,7 @@ use \PhalconRest\Exceptions\HTTPException;
  *     offset=20
  *
  */
-class RESTController extends \PhalconRest\Controllers\BaseController{
+class RESTController extends \OrganicRest\Controllers\BaseController{
 
 	/**
 	 * If query string contains 'q' parameter.
@@ -42,6 +42,18 @@ class RESTController extends \PhalconRest\Controllers\BaseController{
 	 * @var integer
 	 */
 	protected $offset = null;
+
+    /**
+     * Set when there is a 'sort' query parameter
+     * @var integer
+     */
+    protected $sort = 'id';
+
+    /**
+     * Set when there is an 'direction' query parameter
+     * @var integer
+     */
+    protected $direction = 'ASC';
 
 	/**
 	 * Array of fields requested to be searched against
@@ -136,8 +148,10 @@ class RESTController extends \PhalconRest\Controllers\BaseController{
 		$fields = $request->get('fields', null, null);
 
 		// Set limits and offset, elsewise allow them to have defaults set in the Controller
-		$this->limit = ($request->get('limit', null, null)) ?: $this->limit;
-		$this->offset = ($request->get('offset', null, null)) ?: $this->offset;
+		$this->limit       = ($request->get('limit', null, null)) ?: $this->limit;
+		$this->offset      = ($request->get('offset', null, null)) ?: $this->offset;
+		$this->sort        = ($request->get('sort', null, null)) ?: $this->sort;
+		$this->direction   = ($request->get('direction', null, null)) ?: $this->direction;
 
 		// If there's a 'q' parameter, parse the fields, then determine that all the fields in the search
 		// are allowed to be searched from $allowedFields['search']
@@ -244,5 +258,22 @@ class RESTController extends \PhalconRest\Controllers\BaseController{
 
 	}
 
+    protected function getState() {
+
+        $state = array();
+        $state['limit']       = $this->limit;
+        $state['offset']      = $this->offset;
+        $state['offset']      = $this->offset;
+        $state['sort']        = $this->sort;
+        $state['direction']   = $this->direction;
+
+        return $state;
+    }
+
+    protected function provide($results) {
+
+        return array('state' => $this->getState(), 'items' => $results);
+
+    }
 
 }

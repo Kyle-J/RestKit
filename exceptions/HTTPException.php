@@ -1,5 +1,5 @@
 <?php
-namespace PhalconRest\Exceptions;
+namespace OrganicRest\Exceptions;
 
 class HTTPException extends \Exception{
 
@@ -39,11 +39,11 @@ class HTTPException extends \Exception{
 		);
 
 		if(!$req->get('type') || $req->get('type') == 'json'){
-			$response = new \PhalconRest\Responses\JSONResponse();
+			$response = new \OrganicRest\Responses\JSONResponse();
 			$response->send($error, true);	
 			return;
 		} else if($req->get('type') == 'csv'){
-			$response = new \PhalconRest\Responses\CSVResponse();
+			$response = new \OrganicRest\Responses\CSVResponse();
 			$response->send(array($error));
 			return;
 		}

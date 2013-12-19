@@ -1,5 +1,5 @@
 <?php
-namespace PhalconRest\Responses;
+namespace OrganicRest\Responses;
 
 class CSVResponse extends Response{
 

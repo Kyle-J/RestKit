@@ -1,5 +1,5 @@
 <?php
-namespace PhalconRest\Responses;
+namespace OrganicRest\Responses;
 
 class JSONResponse extends Response{
 
@@ -12,7 +12,7 @@ class JSONResponse extends Response{
 
 	public function send($records, $error=false){
 
-		// Error's come from HTTPException.  This helps set the proper envelope data
+        // Error's come from HTTPException.  This helps set the proper envelope data
 		$response = $this->di->get('response');
 		$success = ($error) ? 'ERROR' : 'SUCCESS';
 
@@ -23,6 +23,10 @@ class JSONResponse extends Response{
 			$this->envelope = false;
 		}
 
+        $state   = isset($records['state']) ? $records['state'] : array();
+        $records = isset($records['items']) ? $records['items'] : array();
+
+
 		// Most devs prefer camelCase to snake_Case in JSON, but this can be overriden here
 		if($this->snake){
 			$records = $this->arrayKeysToSnake($records);
@@ -31,12 +35,19 @@ class JSONResponse extends Response{
 		$etag = md5(serialize($records));
 
 		if($this->envelope){
+
+            $request = new \Phalcon\Http\Request();
+
 			// Provide an envelope for JSON responses.  '_meta' and 'records' are the objects.
 			$message = array();
-			$message['_meta'] = array(
-				'status' => $success,
-				'count' => ($error) ? 1 : count($records)
-			);
+
+            $message['_meta'] = array(
+                'status'    => $success,
+                'count'     => ($error) ? 1 : count($records),
+                'type'      => 'application/json'
+            );
+
+            $message['_state'] = $state;
 
 			// Handle 0 record responses, or assign the records
 			if($message['_meta']['count'] === 0){
