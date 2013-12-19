@@ -1,8 +1,14 @@
 OrganicRest
 ===========
 
-A base project for APIs using the [Phalcon][phalcon] framework
----------------------------------------------------
+https://bitbucket.org/organicdevelopment/restcore/src
+
+A base project for APIs using the [Phalcon][phalcon] framework based on PhalconRest
+-----------------------------------------------------------------------------------
+
+Ported by Kyle Waters kyle@theorganicagency.com
+
+https://github.com/cmoore4/phalcon-rest
 
 The Phalcon framework is an awesome PHP framework that exists as a C-extension to the language.
 This allows it to be incredibly fast.  But aside from its quickness, it is an amazingly
