@@ -1,12 +1,25 @@
-OrganicRest
-===========
+RestCore 0.1
+============
 
-https://bitbucket.org/organicdevelopment/restcore/src
+https://bitbucket.org/organicdevelopment/restcore
 
 A base project for APIs using the [Phalcon][phalcon] framework based on PhalconRest
 -----------------------------------------------------------------------------------
 
 Ported by Kyle Waters kyle@theorganicagency.com
+
+
+Changes from PhalconRest
+------------------------
+
+ - Added state to RSON Response
+ - Added sorting and direction to options
+ - Added 'type' to meta data
+ - Refactored results passing from Rest controller to response. See RestController->provide().
+ - Added properties example
+ - Changed 'data' folder to 'schema'
+ - Removed unused files / folders
+ - Removed phalcon-rest example data and files
 
 https://github.com/cmoore4/phalcon-rest
 
