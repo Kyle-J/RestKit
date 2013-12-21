@@ -23,12 +23,12 @@ return call_user_func(function(){
     $propertiesCollection->head('/', 'get');
 
     // $id will be passed as a parameter to the Controller's specified function
-    $propertiesCollection->get('/{id:[0-9]+}', 'getOne');
-    $propertiesCollection->head('/{id:[0-9]+}', 'getOne');
-    $propertiesCollection->post('/', 'post');
-    $propertiesCollection->delete('/{id:[0-9]+}', 'delete');
-    $propertiesCollection->put('/{id:[0-9]+}', 'put');
-    $propertiesCollection->patch('/{id:[0-9]+}', 'patch');
+//    $propertiesCollection->get('/{id:[0-9]+}', 'getOne');
+//    $propertiesCollection->head('/{id:[0-9]+}', 'getOne');
+//    $propertiesCollection->post('/', 'post');
+//    $propertiesCollection->delete('/{id:[0-9]+}', 'delete');
+//    $propertiesCollection->put('/{id:[0-9]+}', 'put');
+//    $propertiesCollection->patch('/{id:[0-9]+}', 'patch');
 
     return $propertiesCollection;
 

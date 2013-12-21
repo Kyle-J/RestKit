@@ -10,10 +10,14 @@ use Phalcon\Mvc\Micro\Collection,
  */
 $loader = new \Phalcon\Loader();
 $loader->registerNamespaces(array(
-	'OrganicRest\Models' => __DIR__ . '/models/',
+//	'Models' => __DIR__ . '/models/',
 	'OrganicRest\Controllers' => __DIR__ . '/controllers/',
 	'OrganicRest\Exceptions' => __DIR__ . '/exceptions/',
 	'OrganicRest\Responses' => __DIR__ . '/responses/'
+))->register();
+
+$loader->registerDirs(array(
+    __DIR__ .'/models/'
 ))->register();
 
 /**
@@ -52,16 +56,17 @@ $di->set('modelsCache', function() {
 
 	//Cache data for one day by default
 	$frontCache = new \Phalcon\Cache\Frontend\Data(array(
-		'lifetime' => 3600
+		'lifetime' => 1800
 	));
 
 	//File cache settings
-	$cache = new \Phalcon\Cache\Backend\File($frontCache, array(
-		'cacheDir' => __DIR__ . '/cache/'
+	$cache = new \Phalcon\Cache\Backend\Apc($frontCache, array(
+        "prefix" => 'modelCache',
 	));
 
 	return $cache;
 });
+
 
 /**
  * Database setup.  Here, we'll use a simple SQLite database of Disney Princesses.
@@ -101,6 +106,17 @@ $di->setShared('requestBody', function() {
 
 	return $in;
 });
+
+$di['modelsMetadata'] = function() {
+
+    // Create a meta-data manager with APC
+    $metaData = new \Phalcon\Mvc\Model\MetaData\Apc(array(
+        "lifetime" => 86400,
+        "prefix"   => "meta-data-cache"
+    ));
+
+    return $metaData;
+};
 
 /**
  * Out application is a Micro application, so we mush explicitly define all the routes.
@@ -188,21 +204,6 @@ foreach($di->get('collections') as $collection){
 
 
 /**
- * The base route return the list of defined routes for the application.
- * This is not strictly REST compliant, but it helps to base API documentation off of.
- * By calling this, you can quickly see a list of all routes and their methods.
- */
-$app->get('/', function() use ($app){
-	$routes = $app->getRouter()->getRoutes();
-	$routeDefinitions = array('GET'=>array(), 'POST'=>array(), 'PUT'=>array(), 'PATCH'=>array(), 'DELETE'=>array(), 'HEAD'=>array(), 'OPTIONS'=>array());
-	foreach($routes as $route){
-		$method = $route->getHttpMethods();
-		$routeDefinitions[$method][] = $route->getPattern();
-	}
-	return $routeDefinitions;
-});
-
-/**
  * After a route is run, usually when its Controller returns a final value,
  * the application runs the following function which actually sends the response to the client.
  *
@@ -220,7 +221,7 @@ $app->after(function() use ($app) {
 	}
 
 	// Respond by default as JSON
-	if(!$app->request->get('type') || $app->request->get('type') == 'json'){
+	if(!$app->request->get('format') || $app->request->get('format') == 'json'){
 
 		// Results returned from the route's controller.  All Controllers should return an array
 		$records = $app->getReturnedValue();
@@ -232,7 +233,7 @@ $app->after(function() use ($app) {
 
 		return;
 	}
-	else if($app->request->get('type') == 'csv'){
+	else if($app->request->get('format') == 'csv'){
 
 		$records = $app->getReturnedValue();
 		$response = new \OrganicRest\Responses\CSVResponse();
@@ -245,7 +246,7 @@ $app->after(function() use ($app) {
 			'Could not return results in specified format',
 			403,
 			array(
-				'dev' => 'Could not understand type specified by type paramter in query string.',
+				'dev' => 'Could not understand type specified by type parameter in query string.',
 				'internalCode' => 'NF1000',
 				'more' => 'Type may not be implemented. Choose either "csv" or "json"'
 			)
@@ -264,7 +265,7 @@ $app->notFound(function () use ($app) {
 		array(
 			'dev' => 'That route was not found on the server.',
 			'internalCode' => 'NF1000',
-			'more' => 'Check route for mispellings.'
+			'more' => 'Check route for misspellings.'
 		)
 	);
 });

@@ -74,8 +74,10 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
 	 * @var array
 	 */
 	protected $allowedFields = array(
+
 		'search' => array(),
 		'partials' => array()
+
 	);
 
 
@@ -86,6 +88,7 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
 	 * @return void
 	 */
 	public function __construct($parseQueryString = true){
+
 		parent::__construct();
 		if ($parseQueryString){
 			$this->parseRequest($this->allowedFields);
@@ -143,6 +146,7 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
 	 * @return boolean              Always true if no exception is thrown
 	 */
 	protected function parseRequest($allowedFields){
+
 		$request = $this->di->get('request');
 		$searchParams = $request->get('q', null, null);
 		$fields = $request->get('fields', null, null);
@@ -203,12 +207,14 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
 	 * @return true
 	 */
 	public function optionsBase(){
+
 		$response = $this->di->get('response');
 		$response->setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, HEAD');
 		$response->setHeader('Access-Control-Allow-Origin', $this->di->get('request')->header('Origin'));
 		$response->setHeader('Access-Control-Allow-Credentials', 'true');
 		$response->setHeader('Access-Control-Allow-Headers', "origin, x-requested-with, content-type");
 		$response->setHeader('Access-Control-Max-Age', '86400');
+
 		return true;
 	}
 
@@ -218,12 +224,14 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
 	 * @return true
 	 */
 	public function optionsOne(){
+
 		$response = $this->di->get('response');
 		$response->setHeader('Access-Control-Allow-Methods', 'GET, PUT, PATCH, DELETE, OPTIONS, HEAD');
 		$response->setHeader('Access-Control-Allow-Origin', $this->di->get('request')->header('Origin'));
 		$response->setHeader('Access-Control-Allow-Credentials', 'true');
 		$response->setHeader('Access-Control-Allow-Headers', "origin, x-requested-with, content-type");
 		$response->setHeader('Access-Control-Max-Age', '86400');
+
 		return true;
 	}
 
@@ -267,13 +275,82 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
         $state['sort']        = $this->sort;
         $state['direction']   = $this->direction;
 
+        // TODO: Add search params to state
+
         return $state;
     }
 
-    protected function provide($results) {
+    protected function getLinks()
+    {
+        $links = array();
+        if($previous = $this->getPrevious()) $links['previous'] = $previous;
+        $links['current'] = $this->getCurrent();
+        $links['next']    = $this->getNext();
 
-        return array('state' => $this->getState(), 'items' => $results);
+        return $links;
+    }
 
+    protected function getPrevious()
+    {
+        if($this->offset > 0){
+
+            $state = $this->getState();
+            $state['offset'] -= 1;
+            $state = http_build_query($state);
+
+            $route = $this->di->get('router')->getMatchedRoute();
+
+            return $route->getPattern() . '?' .$state;
+
+        }
+
+        return false;
+
+    }
+
+    protected function getCurrent()
+    {
+        $state = http_build_query($this->getState());
+
+        $route = $this->di->get('router')->getMatchedRoute();
+        $uri = $route->getPattern() . '?' .$state;
+
+        return $uri;
+    }
+
+    protected function getNext()
+    {
+        $state = $this->getState();
+        $state['offset'] += 1;
+        $state = http_build_query($state);
+
+        $route = $this->di->get('router')->getMatchedRoute();
+        $uri = $route->getPattern() . '?' .$state;
+
+        return $uri;
+    }
+
+    protected function getMeta($records)
+    {
+        $meta = array(
+            'status'    => 'SUCCESS',
+            'count'     => count($records),
+            'type'      => 'application/json'
+        );
+
+        return $meta;
+    }
+
+    protected function provide($records) {
+
+        $RESTSchema = new \OrganicRest\Responses\Schemas\Rest(array(
+            'records' => $records,
+            'state'   => $this->getState(),
+            'links'   => $this->getLinks(),
+            'meta'    => $this->getMeta($records)
+        ));
+
+        return $RESTSchema;
     }
 
 }

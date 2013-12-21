@@ -1,8 +1,8 @@
 <?php
 
 namespace OrganicRest\Controllers;
-use OrganicRest\Models\Properties as Properties;
 use \OrganicRest\Exceptions\HTTPException;
+use Phalcon\Mvc\Model\Resultset;
 
 class PropertiesController extends RESTController {
 
@@ -29,7 +29,7 @@ class PropertiesController extends RESTController {
      *
      * @var string
      */
-    protected $direction = 'asc';
+    protected $direction = 'desc';
 
 
     /**
@@ -39,14 +39,17 @@ class PropertiesController extends RESTController {
      */
     public function get(){
 
-        $properties = new Properties();
-
         $context = array(
+            'models'     => array('Properties'),
+            'columns'    => array('id','title','type','address_1','address_2','city','state'),
             'limit'  => $this->limit,
             'offset' => $this->offset,
             'order'  => $this->sort .' '. $this->direction
         );
 
+        $queryBuilder = new \Phalcon\Mvc\Model\Query\Builder($context);
+
+        // Build search conditions
         if($this->isSearch){
 
             $context['conditions'] = '';
@@ -61,17 +64,71 @@ class PropertiesController extends RESTController {
                 if($field != $last_field) $context['conditions'] .= ' OR ';
 
             }
+
+            $queryBuilder->where($context['conditions'], $context['bind']);
         }
 
-        $list = $properties::find($context);
+        // Get the Phalcon Query Language output to use as APC key
+        $phql  = $queryBuilder->getPhql();
 
-        $response = array();
-        foreach($list as $item)
-            $response[] = $item->toArray();
+        // Check if records exist in cache
+        if(apc_exists($phql)) {
 
-        return $this->provide($response);
+            $records = apc_fetch($phql);
+
+            return $this->provide($records);
+
+        // Otherwise run the query
+        }else{
+
+            $query = $queryBuilder->getQuery();
+
+            $query->cache(array('key' => $phql, 'lifetime' => 1800)); // 30 minutes
+            $records = $query->execute()->setHydrateMode(Resultset::TYPE_RESULT_FULL)->toArray();
+
+            apc_store($phql, $records);
+
+            return $this->provide($records);
+        }
 
     }
+
+//    public function get()
+//    {
+//        // ORM (slower style)
+//        $properties = new Properties();
+//
+//        $context = array(
+//            'limit'  => $this->limit,
+//            'offset' => $this->offset,
+//            'order'  => $this->sort .' '. $this->direction
+//        );
+//
+//        if($this->isSearch){
+//
+//            $context['conditions'] = '';
+//            $context['bind'] = array();
+//
+//            $last_field = @end(array_keys($this->searchFields));
+//            foreach ($this->searchFields as $field => $value) {
+//
+//                $context['conditions'] .= " $field LIKE :{$field}_value:";
+//                $context['bind'][$field.'_value'] = '%'.$value.'%';
+//
+//                if($field != $last_field) $context['conditions'] .= ' OR ';
+//
+//            }
+//        }
+//
+//        $list = $properties::find($context);
+//
+//        $records = array();
+//        foreach($list as $item)
+//            $records[] = $item->toArray();
+//
+//
+//        return $this->provide($records);
+//    }
 
     /**
      * Get a single property by ID
@@ -93,6 +150,7 @@ class PropertiesController extends RESTController {
         return $this->provide($response);
 
     }
+
 
     public function noId()
     {

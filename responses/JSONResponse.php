@@ -10,68 +10,41 @@ class JSONResponse extends Response{
 		parent::__construct();
 	}
 
-	public function send($records, $error=false){
+	public function send($schema, $error = false){
 
         // Error's come from HTTPException.  This helps set the proper envelope data
 		$response = $this->di->get('response');
 		$success = ($error) ? 'ERROR' : 'SUCCESS';
 
-		// If the query string 'envelope' is set to false, do not use the envelope.
+        $schema->_meta->status = $success;
+        if($error) $schema->_meta->count = 1;
+
+        // If the query string 'envelope' is set to false, do not use the envelope.
 		// Instead, return headers.
 		$request = $this->di->get('request');
-		if($request->get('envelope', null, null) === 'false'){
-			$this->envelope = false;
-		}
 
-        $state   = isset($records['state']) ? $records['state'] : array();
-        $records = isset($records['items']) ? $records['items'] : array();
+        // If the envelope is on (default), the JSON response will contain
+        // meta, state and links data. If envelope is false, the response
+        // will contain records only.
+		if($request->get('envelope', null, null) !== 'false'){
 
-
-		// Most devs prefer camelCase to snake_Case in JSON, but this can be overriden here
-		if($this->snake){
-			$records = $this->arrayKeysToSnake($records);
-		}
-
-		$etag = md5(serialize($records));
-
-		if($this->envelope){
-
-            $request = new \Phalcon\Http\Request();
-
-			// Provide an envelope for JSON responses.  '_meta' and 'records' are the objects.
-			$message = array();
-
-            $message['_meta'] = array(
-                'status'    => $success,
-                'count'     => ($error) ? 1 : count($records),
-                'type'      => 'application/json'
-            );
-
-            $message['_state'] = $state;
-
-			// Handle 0 record responses, or assign the records
-			if($message['_meta']['count'] === 0){
-				// This is required to make the response JSON return an empty JS object.  Without
-				// this, the JSON return an empty array:  [] instead of {}
-				$message['records'] = new \stdClass();
-			} else {
-				$message['records'] = $records;
-			}
+            $body = $schema->full();
 
 		} else {
-			$response->setHeader('X-Record-Count', count($records));
+
+			$response->setHeader('X-Record-Count', count($schema->records));
 			$response->setHeader('X-Status', $success);
-			$message = $records;
+
+            $body = $schema->raw();
+
 		}
 
 		$response->setContentType('application/json');
-		$response->setHeader('E-Tag', $etag);
+	//	$response->setHeader('E-Tag', md5(serialize($body)));
 
 		// HEAD requests are detected in the parent constructor. HEAD does everything exactly the
 		// same as GET, but contains no body.
-		if(!$this->head){
-			$response->setJsonContent($message);
-		}
+		if(!$this->head) $response->setJsonContent($body);
 
 		$response->send();
 
