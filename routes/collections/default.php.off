@@ -6,7 +6,7 @@ return call_user_func(function(){
 
     $defaultCollection
         ->setPrefix('/')
-        ->setHandler('\OrganicRest\Controllers\DescriptionController')
+        ->setHandler('\OrganicRest\Controllers\DefaultController')
         ->setLazy(true);
 
     // Set Access-Control-Allow headers.

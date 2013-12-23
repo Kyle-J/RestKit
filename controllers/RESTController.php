@@ -80,7 +80,6 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
 
 	);
 
-
 	/**
 	 * Constructor, calls the parse method for the query string by default.
 	 * @param boolean $parseQueryString true Can be set to false if a controller needs to be called
@@ -149,13 +148,13 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
 
 		$request = $this->di->get('request');
 		$searchParams = $request->get('q', null, null);
-		$fields = $request->get('fields', null, null);
 
 		// Set limits and offset, elsewise allow them to have defaults set in the Controller
-		$this->limit       = ($request->get('limit', null, null)) ?: $this->limit;
-		$this->offset      = ($request->get('offset', null, null)) ?: $this->offset;
-		$this->sort        = ($request->get('sort', null, null)) ?: $this->sort;
-		$this->direction   = ($request->get('direction', null, null)) ?: $this->direction;
+		$this->limit       = ($request->get('limit', null, null))       ?: $this->limit;
+		$this->offset      = ($request->get('offset', null, null))      ?: $this->offset;
+		$this->sort        = ($request->get('sort', null, null))        ?: $this->sort;
+		$this->direction   = ($request->get('direction', null, null))   ?: $this->direction;
+        $this->fields      = ($request->get('fields', null, null))      ?: null;
 
 		// If there's a 'q' parameter, parse the fields, then determine that all the fields in the search
 		// are allowed to be searched from $allowedFields['search']
@@ -178,9 +177,9 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
 
 		// If there's a 'fields' paramter, this is a partial request.  Ensures all the requested fields
 		// are allowed in partial responses.
-		if($fields){
+		if($this->fields){
 			$this->isPartial = true;
-			$this->partialFields = $this->parsePartialFields($fields);
+			$this->partialFields = $this->parsePartialFields($this->fields);
 
 			// Determines if fields is a strict subset of allowed fields
 			if(array_diff($this->partialFields, $this->allowedFields['partials'])){
@@ -266,41 +265,55 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
 
 	}
 
-    protected function getState() {
+    /**
+     * Should be used to return data in the correct format at the end of
+     * any controller functions which outputs data to the service layer.
+     *
+     * Ensure REST controllers extend this class and end all providing
+     * functions with $this->provide($records);
+     *
+     * @param $records
+     * @return \OrganicRest\Responses\Schemas\Rest
+     */
+    protected function provide($records) {
 
-        $state = array();
-        $state['limit']       = $this->limit;
-        $state['offset']      = $this->offset;
-        $state['offset']      = $this->offset;
-        $state['sort']        = $this->sort;
-        $state['direction']   = $this->direction;
+        $RESTSchema = new \OrganicRest\Responses\Schemas\Rest(array(
+            'status'    => \OrganicRest\Responses\Http::OK,
+            'href'      => $this->getCurrent(),
+            'first'     => $this->getFirst(),
+            'previous'  => $this->getPrevious(),
+            'next'      => $this->getNext(),
+        //    'last'      => $this->getLast($records),
+            'count'     => count($records),
+            'limit'     => $this->limit,
+            'offset'    => $this->offset,
+            'sort'      => $this->sort,
+            'direction' => $this->direction,
+            'search'    => $this->searchFields,
+            'fields'    => explode(',', $this->fields), // TODO:: Explode this higher up and handel allowed fields properly
+            'records'   => $records
+        ));
 
-        // TODO: Add search params to state
-
-        return $state;
+        return $RESTSchema;
     }
 
-    protected function getLinks()
-    {
-        $links = array();
-        if($previous = $this->getPrevious()) $links['previous'] = $previous;
-        $links['current'] = $this->getCurrent();
-        $links['next']    = $this->getNext();
-
-        return $links;
-    }
-
-    protected function getPrevious()
+    /**
+     * Get URL for previous resource / list navigation
+     * TODO: Handel single item cases
+     *
+     * @return bool|string
+     */
+    protected function getFirst()
     {
         if($this->offset > 0){
 
             $state = $this->getState();
-            $state['offset'] -= 1;
-            $state = http_build_query($state);
+            $state['offset'] = 0;
+            $state = urldecode(http_build_query($state));
 
             $route = $this->di->get('router')->getMatchedRoute();
 
-            return $route->getPattern() . '?' .$state;
+            return $this->baseUrl().$route->getPattern() . '?' .$state;
 
         }
 
@@ -308,49 +321,124 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
 
     }
 
+    /**
+     * Get URL for previous resource / list navigation
+     * TODO: Handel single item cases
+     *
+     * @return bool|string
+     */
+    protected function getPrevious()
+    {
+        if($this->offset > 0){
+
+            $state = $this->getState();
+            $state['offset'] -= 1;
+            $state = urldecode(http_build_query($state));
+
+            $route = $this->di->get('router')->getMatchedRoute();
+
+            return $this->baseUrl().$route->getPattern() . '?' .$state;
+
+        }
+
+        return false;
+
+    }
+
+    /**
+     * Gets Current URL for current resource / list navigation
+     * TODO: Handel single item cases
+     *
+     * @return bool|string
+     */
     protected function getCurrent()
     {
-        $state = http_build_query($this->getState());
+        $state = urldecode(http_build_query($this->getState()));
 
         $route = $this->di->get('router')->getMatchedRoute();
         $uri = $route->getPattern() . '?' .$state;
 
-        return $uri;
+        return $this->baseUrl().$uri;
     }
 
+    /**
+     * Gets Current URL for next resource / list navigation
+     * TODO: Handel single item cases
+     *
+     * @return bool|string
+     */
     protected function getNext()
     {
         $state = $this->getState();
         $state['offset'] += 1;
-        $state = http_build_query($state);
+        $state = urldecode(http_build_query($state));
 
         $route = $this->di->get('router')->getMatchedRoute();
         $uri = $route->getPattern() . '?' .$state;
 
-        return $uri;
+        return $this->baseUrl().$uri;
     }
 
-    protected function getMeta($records)
+    /**
+     * Gets Current URL for next resource / list navigation
+     * TODO: Handel single item cases
+     *
+     * @return bool|string
+     */
+    protected function getLast($records)
     {
-        $meta = array(
-            'status'    => 'SUCCESS',
-            'count'     => count($records),
-            'type'      => 'application/json'
-        );
+        $state = $this->getState();
+        $state['offset'] = count($records) - 1; //TODO: Need to implement getTotal method before this can be added
+        $state = urldecode(http_build_query($state));
 
-        return $meta;
+        $route = $this->di->get('router')->getMatchedRoute();
+        $uri = $route->getPattern() . '?' .$state;
+
+        return $this->baseUrl().$uri;
     }
 
-    protected function provide($records) {
+    /**
+     * Returns application state data pertinent to
+     * the current request
+     *
+     * @return array
+     */
+    protected function getState() {
 
-        $RESTSchema = new \OrganicRest\Responses\Schemas\Rest(array(
-            'records' => $records,
-            'state'   => $this->getState(),
-            'links'   => $this->getLinks(),
-            'meta'    => $this->getMeta($records)
-        ));
+        $search = array();
+        $last_field = @end(array_keys($this->searchFields));
+        if($this->searchFields) {
+            foreach($this->searchFields as $field => $value){
+                $search = $field . ':' . $value;
+                if($field !== $last_field) $search . ',';
+            }
 
-        return $RESTSchema;
+        }
+
+        $state = array();
+        $state['limit']       = $this->limit;
+        $state['offset']      = $this->offset;
+        $state['offset']      = $this->offset;
+        $state['sort']        = $this->sort;
+        $state['direction']   = $this->direction;
+        $state['fields']      = $this->fields ?: '*';
+        $state['search']      = $search;
+
+        return $state;
+    }
+
+    /**
+     * Gets base URL for the request {http(s)}://{domain}/
+     *
+     * @return bool|string
+     */
+    public function baseUrl()
+    {
+        return sprintf(
+            "%s://%s",
+            isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' ? 'https' : 'http',
+            $_SERVER['HTTP_HOST']
+        );
     }
 
 }

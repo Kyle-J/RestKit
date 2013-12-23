@@ -7,7 +7,7 @@ return call_user_func(function(){
 
     $propertiesCollection
         // VERSION NUMBER SHOULD BE FIRST URL PARAMETER, ALWAYS
-        ->setPrefix('/v1/properties')
+        ->setPrefix('/properties')
         // Must be a string in order to support lazy loading
         ->setHandler('\OrganicRest\Controllers\PropertiesController')
         ->setLazy(true);
@@ -18,9 +18,9 @@ return call_user_func(function(){
 
     // First paramter is the route, which with the collection prefix here would be GET /example/
     // Second paramter is the function name of the Controller.
-    $propertiesCollection->get('/', 'get');
+    $propertiesCollection->get('/', 'getList');
     // This is exactly the same execution as GET, but the Response has no body.
-    $propertiesCollection->head('/', 'get');
+    $propertiesCollection->head('/', 'getList');
 
     // $id will be passed as a parameter to the Controller's specified function
 //    $propertiesCollection->get('/{id:[0-9]+}', 'getOne');

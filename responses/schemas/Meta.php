@@ -7,7 +7,7 @@ class Meta extends Schema {
 
     public $count = 0;
 
-    public $type = '';
+//    public $type = '';
 
     public function setCount($count) {
         $this->count = $count;

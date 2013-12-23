@@ -38,6 +38,9 @@ class HTTPException extends \Exception{
 			'applicationCode' => $this->errorCode,
 		);
 
+        var_dump($error);
+        exit;
+
 		if(!$req->get('type') || $req->get('type') == 'json'){
 			$response = new \OrganicRest\Responses\JSONResponse();
 			$response->send($error, true);	

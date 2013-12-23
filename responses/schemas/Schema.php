@@ -1,38 +1,41 @@
 <?php
 namespace OrganicRest\Responses\Schemas;
 
-class Schema {
+class Schema implements SchemaInterface {
 
     public function __construct($data) {
 
         // Insert values for explicitly defined schema properties only.
         // This should help avoid any surprise data showing up in responses.
-        $vars = get_object_vars($this);
-
         foreach(get_object_vars($this) as $name => $value){
-            if(isset($data[$name])) $this->$name = $data[$name];
+
+            // Otherwise just assign the data to the property as it
+            // is provided
+            if(isset($data[$name])) {
+
+                $this->$name = $data[$name];
+            }
         }
     }
 
     public function full()
     {
-        $result = array(
-
-            '_meta'   => (array) $this->_meta,
-            '_state'  => (array) $this->_state,
-            'records' => (array) $this->records,
-            'links'   => (array) $this->links
-
-        );
-
-        return $result;
+        return null;
     }
 
-    public function raw()
+    public function records()
     {
-        $result = array('records' => (array) $this->records);
+        return null;
+    }
 
-        return $result;
+    public function getStatus()
+    {
+        return null;
+    }
+
+    public function getCount()
+    {
+        return null;
     }
 
 }
