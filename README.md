@@ -3,10 +3,10 @@ RestCore 0.1
 
 https://bitbucket.org/organicdevelopment/restcore
 
-A base project for APIs using the [Phalcon][phalcon] framework based on PhalconRest
------------------------------------------------------------------------------------
+A base project for APIs using the [Phalcon][phalcon] framework based on PhalconRest by Sean Moore
+-------------------------------------------------------------------------------------------------
 
-Ported by Kyle Waters kyle@theorganicagency.com
+Updated and adapted by Kyle Waters kyle@theorganicagency.com
 
 
 Changes from PhalconRest
@@ -20,8 +20,32 @@ Changes from PhalconRest
  - Changed 'data' folder to 'schema'
  - Removed unused files / folders
  - Removed phalcon-rest example data and files
+ - Change search parameter name to ?search
+ - Updated partial fields and allowed fields logic
+ - Updated and cleaned up parse params code
+ - Added Schemas
+ - Changed JSON response schema and implemented HATEOAS best practises
+ - Added search and field params to the response
+ - Updated status in response to HTTP code (was "SUCCESS")
+ - Added RESTDB controller for processing standard look ups via database
+ - Removed version number from URL and added to content type (application/json;application&v=1)
+ - Changed ETag to only generate for look ups under 20 records (was causing PHP memory limit errors for large result sets)
 
-https://github.com/cmoore4/phalcon-rest
+ ** The changes are now becoming too many to list, many parts have stayed a long way from the orginal framework now.
+
+
+Original Project - https://github.com/cmoore4/phalcon-rest
+
+
+Many changed made based on research and recommendations for best practise REST API implementation.
+
+http://www.youtube.com/watch?v=hdSrT4yjS1g
+http://www.youtube.com/watch?v=ITmcAGvfcJI
+http://www.youtube.com/watch?v=HW9wWZHWhnI
+
+http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api
+
+
 
 The Phalcon framework is an awesome PHP framework that exists as a C-extension to the language.
 This allows it to be incredibly fast.  But aside from its quickness, it is an amazingly
