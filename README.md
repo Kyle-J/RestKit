@@ -62,6 +62,7 @@ TODO List
  - Implement expand parameter
  - Implement logging server via MongoDb
  - Implement socket access adapter for real-time
+ - Complete the describe controller and functions
 
 
 The Phalcon framework is an awesome PHP framework that exists as a C-extension to the language.
