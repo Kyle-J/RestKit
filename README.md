@@ -76,7 +76,7 @@ API Assumptions
 **URL Structure**
 
 ```
-/v1/path1/path2?q=(search1:value1,search2:value2)&fields=(field1,field2,field3)&limit=10&offest=20&type=csv&suppress_error_codes=true
+/v1/path1/path2?search=(search1:value1,search2:value2)&fields=(field1,field2,field3)&limit=10&offest=20&type=csv
 ```
 
 **Request Bodies**
@@ -88,13 +88,13 @@ The Fields
 
 **Search**
 
-Searches are determined by the 'q' parameter.  Following that is a parenthesis enclosed list of key:value pairs, separated by commas.
+Searches are determined by the 'search' parameter.  Following that is a parenthesis enclosed list of key:value pairs, separated by commas.
 
-> ex: q=(city:Exeter,title:Property 1)
+> ex: search=(city:Exeter,title:Property 1)
 
 **Partial Responses**
 
-Partial responses are used to only return certain explicit fields from a record. They are determined by the 'fields' paramter, which is a list of field names separated by commas, enclosed in parenthesis.
+Partial responses are used to only return certain explicit fields from a record. They are determined by the 'fields' parameter, which is a list of field names separated by commas, enclosed in parenthesis.
 
 > ex: fields=(id,title,location)
 
@@ -104,16 +104,20 @@ Often used to paginate large result sets.  Offset is the record to start from, a
 
 > ex: limit=20&offset=20   will return results 21 to 40
 
-**Return Type**
+**Return Format**
 
 Overrides any accept headers.  JSON is assumed otherwise.  Return type handler must be implemented.
 
-> ex: type=xml
+> ex: format=xml
+
+Changed search type. Filter uses 'AND' glue, default uses 'OR' glue.
+
+> ex: search_type=filter
 
 **Suppressed Error Codes**
 
 Some clients require all responses to be a 200 (Flash, for example), even if there was an application error.
-With this paramter included, the application will always return a 200 response code, and clients will be
+With this parameter included, the application will always return a 200 response code, and clients will be
 responsible for checking the response body to ensure a valid response.
 
 > ex: suppress_error_codes=true
@@ -128,21 +132,42 @@ All route controllers must return an array.  This array is used to create the re
 JSON is the default response type.  It comes with an envelope wrapper, so responses will look like this:
 
 ```
-GET /v1/properties?q=(city:exeter)&offset=1&limit=2&fields=(name,location,prince)
+GET properties?search=(city:exeter)&offset=1&limit=2&fields=id,title
 
 {
-    "_meta":{"status":"SUCCESS","count":2,"type":"application\/json"},
-    "_state":{"limit":null,"offset":null,"sort":"title","direction":"asc"},
-    "records":[
-        {"id":"1","title":"Property 1","type":"Flat","city":"Exeter"},
-        {"id":"2","title":"Property 2","type":"House","city":"Exeter"}]
-    }
-```
+    "status": 200,
+    "href": "http://organic-rest.loc/properties?limit=2&offset=1&sort=title&direction=desc&fields=id,title&search=(city:exeter)",
+    "first": "http://organic-rest.loc/properties?limit=2&offset=0&sort=title&direction=desc&fields=id,title&search=(city:exeter)",
+    "previous": "http://organic-rest.loc/properties?limit=2&offset=0&sort=title&direction=desc&fields=id,title&search=(city:exeter)",
+    "next": "http://organic-rest.loc/properties?limit=2&offset=2&sort=title&direction=desc&fields=id,title&search=(city:exeter)",
+    "count": 2,
+    "limit": "2",
+    "offset": "1",
+    "sort": "title",
+    "direction": "desc",
+    "search": {
+        "city": "exeter"
+    },
+    "fields": [
+        "id",
+        "title"
+    ],
+    "records": [
+        {
+            "id": "9005",
+            "title": "Property 2"
+        },
+        {
+            "id": "8005",
+            "title": "Property 2"
+        }
+    ]
+}
 
-The envelope can be suppressed for responses via the 'envelope=false' query paramter.  This will return just the record set by itself as the body, and the meta information via X- headers.
+The envelope can be suppressed for responses via the 'envelope=false' query parameter.  This will return just the record set by itself as the body, and the meta information via X- headers.
 
 Often times, database field names are snake_cased.  However, when working with an API, developers 
-genreally prefer JSON fields to be returned in camelCase (many API requests are from browsers, in JS).
+generally prefer JSON fields to be returned in camelCase (many API requests are from browsers, in JS).
 This project will by default convert all keys in a records response from snake_case to camelCase.
 
 This can be turned off for your API by setting the JSONResponse's function "convertSnakeCase(false)".
