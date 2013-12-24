@@ -28,10 +28,12 @@ Changes from PhalconRest
  - Added search and field params to the response
  - Updated status in response to HTTP code (was "SUCCESS")
  - Added RESTDB controller for processing standard look ups via database
+ - Change queries to use query builder instead of ORM for speed (200% faster lookups)
+ - Added APC caching for record look-ups
  - Removed version number from URL and added to content type (application/json;application&v=1)
  - Changed ETag to only generate for look ups under 20 records (was causing PHP memory limit errors for large result sets)
 
- ** The changes are now becoming too many to list, many parts have stayed a long way from the orginal framework now.
+ ** The changes are now becoming too many to list, many parts have stayed a long way from the original framework now.
 
 
 Original Project - https://github.com/cmoore4/phalcon-rest
@@ -49,22 +51,22 @@ http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api
 
 The Phalcon framework is an awesome PHP framework that exists as a C-extension to the language.
 This allows it to be incredibly fast.  But aside from its quickness, it is an amazingly
-powerful fraemwork with excellent [documentation][phalconDocs] that follows many best practises of
+powerful framework with excellent [documentation][phalconDocs] that follows many best practises of
 modern software development.  This includes using the Direct Injection pattern to handle service
-resolution across classes, a PSR-0 compliant autoloader, MVC architecture (or not), caching
-handlers for database, flatfile, redis, etc.. and a ton of additional features.
+resolution across classes, a PSR-0 compliant auto-loader, MVC architecture (or not), caching
+handlers for database, flat file, redis, etc.. and a ton of additional features.
 
 The purpose of this project is to establish a base project with Phalcon that uses the best practices
 from the Phalcon Framework to implement best practises of [API Design][apigeeBook].
 
 Writing routes that respond with JSON is easy in any of the major frameworks.  What I've done here is to 
 go beyond that and extend the framework such that APIs written using this project are pragmatically 
-REST-ish and have conveniance methods and patterns implemented that are more than a simple
+REST-ish and have convenience methods and patterns implemented that are more than a simple
 'echo json_encode($array)'.
 
-Provided are robust Error messages, controllers that parse searching strings and partial responsese, 
+Provided are robust Error messages, controllers that parse searching strings and partial responses,
 response classes for sending multiple MIME types based on the request, and examples of how to implement
-authentication in a few ways, as well as a few tempaltes for implementing common REST-ish tasks.
+authentication in a few ways, as well as a few templates for implementing common REST-ish tasks.
 
 It is highly recommended to read through the index.php, HTTPException.php and RESTController.php files, as
 I've tried to comment them extensively.
@@ -76,7 +78,8 @@ API Assumptions
 **URL Structure**
 
 ```
-/v1/path1/path2?search=(search1:value1,search2:value2)&fields=(field1,field2,field3)&limit=10&offest=20&type=csv
+base.tld/collection?search=(search1:value1,search2:value2)&fields=(field1,field2,field3)&limit=10&offest=20&type=csv
+base.tld/resource/id&fields=(field1,field2,field3)
 ```
 
 **Request Bodies**
@@ -91,6 +94,12 @@ The Fields
 Searches are determined by the 'search' parameter.  Following that is a parenthesis enclosed list of key:value pairs, separated by commas.
 
 > ex: search=(city:Exeter,title:Property 1)
+
+**Search Type **
+
+Changed search type. Filter uses 'AND' glue, default uses 'OR' glue.
+
+> ex: search_type=filter
 
 **Partial Responses**
 
@@ -109,10 +118,6 @@ Often used to paginate large result sets.  Offset is the record to start from, a
 Overrides any accept headers.  JSON is assumed otherwise.  Return type handler must be implemented.
 
 > ex: format=xml
-
-Changed search type. Filter uses 'AND' glue, default uses 'OR' glue.
-
-> ex: search_type=filter
 
 **Suppressed Error Codes**
 
