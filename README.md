@@ -28,7 +28,7 @@ Changes from PhalconRest
  - Added search and field params to the response
  - Updated status in response to HTTP code (was "SUCCESS")
  - Added RESTDB controller for processing standard look ups via database
- - Change queries to use query builder instead of ORM for speed (200% faster lookups)
+ - Change queries to use query builder instead of ORM for speed (200% faster look-ups)
  - Added APC caching for record look-ups
  - Removed version number from URL and added to content type (application/json;application&v=1)
  - Changed ETag to only generate for look ups under 20 records (was causing PHP memory limit errors for large result sets)
@@ -47,6 +47,21 @@ http://www.youtube.com/watch?v=HW9wWZHWhnI
 
 http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api
 
+
+TODO List
+---------
+
+ - Implement getTotal() method and 'last' link
+ - Complete implementation of single resource URLS
+ - Uniform error and exception handling and corresponding output
+ - Address error messages format, user message, developer message, codes etc..
+ - Add fallback system for custom Schema definitions
+ - Added config options to collections
+ - Address Accepts headers and response types workflow (if accepts CSV/plain-text) return in that order
+ - Implement OAuth10.a or API keys
+ - Implement expand parameter
+ - Implement logging server via MongoDb
+ - Implement socket access adapter for real-time
 
 
 The Phalcon framework is an awesome PHP framework that exists as a C-extension to the language.
