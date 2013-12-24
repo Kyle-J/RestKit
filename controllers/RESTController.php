@@ -147,7 +147,7 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
 	protected function parseRequest($allowedFields){
 
 		$request = $this->di->get('request');
-		$searchParams = $request->get('q', null, null);
+		$searchParams = $request->get('search', null, null);
 
 		// Set limits and offset, elsewise allow them to have defaults set in the Controller
 		$this->limit       = $request->get('limit', null, null)       ?: $this->limit;
