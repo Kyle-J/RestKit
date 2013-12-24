@@ -13,8 +13,8 @@ class PropertiesController extends RESTDBController {
      * @var array
      */
     protected $allowedFields = array(
-        'search'   => array('title', 'city'),
-        'columns' => array('id','title','type','address_1','address_2','city','state')
+        'search'   => array('title', 'city', 'address_1', 'address_2', 'state'),
+        'columns' => array('id', 'title', 'type', 'address_1', 'address_2', 'city', 'state')
     );
 
     /**

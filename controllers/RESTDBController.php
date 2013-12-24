@@ -29,13 +29,15 @@ class RESTDBController extends RESTController {
             $context['conditions'] = '';
             $context['bind'] = array();
 
+            $search_glue = $this->searchType == 'filter' ? 'AND' : 'OR';
+
             $last_field = @end(array_keys($this->searchFields));
             foreach ($this->searchFields as $field => $value) {
 
                 $context['conditions'] .= " $field LIKE :{$field}_value:";
                 $context['bind'][$field.'_value'] = '%'.$value.'%';
 
-                if($field != $last_field) $context['conditions'] .= ' OR ';
+                if($field != $last_field) $context['conditions'] .= ' '.$search_glue.' ';
 
             }
 
@@ -94,13 +96,15 @@ class RESTDBController extends RESTController {
             $context['conditions'] = '';
             $context['bind'] = array();
 
+            $search_glue = $this->searchType == 'filter' ? 'AND' : 'OR';
+
             $last_field = @end(array_keys($this->searchFields));
             foreach ($this->searchFields as $field => $value) {
 
                 $context['conditions'] .= " $field LIKE :{$field}_value:";
                 $context['bind'][$field.'_value'] = '%'.$value.'%';
 
-                if($field != $last_field) $context['conditions'] .= ' OR ';
+                if($field != $last_field) $context['conditions'] .= ' '.$search_glue.' ';
 
             }
 

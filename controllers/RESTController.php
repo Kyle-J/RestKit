@@ -4,9 +4,9 @@ use \OrganicRest\Exceptions\HTTPException;
 
 /**
  * Base RESTful Controller.
- * Supports queries with the following paramters:
+ * Supports queries with the following parameters:
  *   Searching:
- *     q=(searchField1:value1,searchField2:value2)
+ *     search=(searchField1:value1,searchField2:value2)
  *   Partial Responses:
  *     fields=(field1,field2,field3)
  *   Limits:
@@ -61,6 +61,13 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
 	 */
 	protected $searchFields = null;
 
+    /**
+     * Sets the search type. Used to toggle between filter searching and
+     * loose searching
+     * @var string ('loose' or 'filter")
+     */
+    protected $searchType = 'loose';
+
 	/**
 	 * Array of fields requested to be returned
 	 * @var array
@@ -75,7 +82,7 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
 	 */
 	protected $allowedFields = array(
 
-		'search' => array(),
+		'search' => array('title'),
 		'columns' => array('id','title')
 
 	);
@@ -107,7 +114,7 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
 	 */
 	protected function parseSearchParameters($unparsed){
 
-		// Strip parens that come with the request string
+		// Strip params that come with the request string
 		$unparsed = trim($unparsed, '()');
 
 		// Now we have an array of "key:value" strings.
@@ -138,7 +145,7 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
 
 	/**
 	 * Main method for parsing a query string.
-	 * Finds search paramters, partial response fields, limits, and offsets.
+	 * Finds search parameters, partial response fields, limits, and offsets.
 	 * Sets Controller fields for these variables.
 	 *
 	 * @param  array $allowedFields Allowed fields array for search and partials
@@ -150,19 +157,21 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
 		$searchParams = $request->get('search', null, null);
 
 		// Set limits and offset, elsewise allow them to have defaults set in the Controller
-		$this->limit       = $request->get('limit', null, null)       ?: $this->limit;
-		$this->offset      = $request->get('offset', null, null)      ?: $this->offset;
-		$this->sort        = $request->get('sort', null, null)        ?: $this->sort;
-		$this->direction   = $request->get('direction', null, null)   ?: $this->direction;
-        $this->fields      = $request->get('fields', null, null)      ?: null;
+		$this->limit         = $request->get('limit',       'int',     $this->limit);
+		$this->offset        = $request->get('offset',      'int',     $this->offset);
+		$this->sort          = $request->get('sort',        'string',  $this->sort);
+		$this->direction     = $request->get('direction',   'string',  $this->direction);
+        $this->partialFields = $request->get('fields',      'string',  $this->partialFields);
+        $this->searchType    = $request->get('search_type', 'string',  $this->searchType);
 
-		// If there's a 'q' parameter, parse the fields, then determine that all the fields in the search
+		// If there's a 'search' parameter, parse the fields, then determine that all the fields in the search
 		// are allowed to be searched from $allowedFields['search']
 		if($searchParams){
+
 			$this->isSearch = true;
 			$this->searchFields = $this->parseSearchParameters($searchParams);
 
-			// This handly snippet determines if searchFields is a strict subset of allowedFields['search']
+			// This handy snippet determines if searchFields is a strict subset of allowedFields['search']
 			if(array_diff(array_keys($this->searchFields), $this->allowedFields['search'])){
 				throw new HTTPException(
 					"The fields you specified cannot be searched.",
@@ -175,11 +184,11 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
 			}
 		}
 
-		// If there's a 'fields' paramter, this is a partial request.  Ensures all the requested fields
+		// If there's a 'fields' parameter, this is a partial request.  Ensures all the requested fields
 		// are allowed in partial responses.
-		if($this->fields){
+		if($this->partialFields){
 			$this->isPartial = true;
-			$this->partialFields = $this->parsePartialFields($this->fields);
+			$this->partialFields = $this->parsePartialFields($this->partialFields);
 
 			// Determines if fields is a strict subset of allowed fields
 			if(array_diff($this->partialFields, $this->allowedFields['columns'])){
@@ -262,7 +271,6 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
 		}
 
 		return array($recordsArray);
-
 	}
 
     /**
@@ -318,7 +326,6 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
         }
 
         return false;
-
     }
 
     /**
@@ -342,7 +349,6 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
         }
 
         return false;
-
     }
 
     /**
@@ -405,24 +411,35 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
      */
     protected function getState() {
 
-        $search = array();
+        $search = '';
         $last_field = @end(array_keys($this->searchFields));
         if($this->searchFields) {
             foreach($this->searchFields as $field => $value){
-                $search = $field . ':' . $value;
-                if($field !== $last_field) $search . ',';
+                $search .= $field . ':' . $value;
+                if($field !== $last_field) $search .= ',';
+            }
+
+        }
+
+        $partials = '';
+        $last_field = @end(array_values($this->partialFields));
+        if($this->partialFields) {
+            foreach($this->partialFields as $field){
+                $partials .= $field;
+                if($field !== $last_field) $partials .= ',';
             }
 
         }
 
         $state = array();
+
         $state['limit']       = $this->limit;
         $state['offset']      = $this->offset;
         $state['offset']      = $this->offset;
         $state['sort']        = $this->sort;
         $state['direction']   = $this->direction;
-        $state['fields']      = $this->partialFields ?: '*';
-        $state['search']      = $search;
+        $state['fields']      = $partials;
+        $state['search']      = '('.$search.')';
 
         return $state;
     }
@@ -440,5 +457,4 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
             $_SERVER['HTTP_HOST']
         );
     }
-
 }
