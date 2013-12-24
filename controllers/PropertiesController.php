@@ -13,8 +13,8 @@ class PropertiesController extends RESTDBController {
      * @var array
      */
     protected $allowedFields = array(
-        'search' => array('title', 'city'),
-        'partials' => array('id', 'title', 'city')
+        'search'   => array('title', 'city'),
+        'columns' => array('id','title','type','address_1','address_2','city','state')
     );
 
     /**
@@ -31,12 +31,5 @@ class PropertiesController extends RESTDBController {
      */
     protected $direction = 'desc';
 
-
-    public function getList($context = array())
-    {
-        $context = array('columns' => array('id','title','type','address_1','address_2','city','state'));
-
-        return parent::getList($context);
-    }
 
 }

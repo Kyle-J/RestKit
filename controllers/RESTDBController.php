@@ -76,11 +76,14 @@ class RESTDBController extends RESTController {
         $router->handle();
         $name =  ucfirst($router->getControllerName());
 
+        $this->partialFields = $this->partialFields ?: $this->allowedFields['columns'];
+
         $context = array_merge(array(
-            'models'     => array($name),
-            'limit'  => $this->limit,
-            'offset' => $this->offset,
-            'order'  => $this->sort .' '. $this->direction
+            'models'    => array($name),
+            'limit'     => $this->limit,
+            'offset'    => $this->offset,
+            'order'     => $this->sort .' '. $this->direction,
+            'columns'   => $this->partialFields
         ), $context);
 
         $queryBuilder = new \Phalcon\Mvc\Model\Query\Builder($context);

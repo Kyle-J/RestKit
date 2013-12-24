@@ -76,7 +76,7 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
 	protected $allowedFields = array(
 
 		'search' => array(),
-		'partials' => array()
+		'columns' => array('id','title')
 
 	);
 
@@ -150,11 +150,11 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
 		$searchParams = $request->get('q', null, null);
 
 		// Set limits and offset, elsewise allow them to have defaults set in the Controller
-		$this->limit       = ($request->get('limit', null, null))       ?: $this->limit;
-		$this->offset      = ($request->get('offset', null, null))      ?: $this->offset;
-		$this->sort        = ($request->get('sort', null, null))        ?: $this->sort;
-		$this->direction   = ($request->get('direction', null, null))   ?: $this->direction;
-        $this->fields      = ($request->get('fields', null, null))      ?: null;
+		$this->limit       = $request->get('limit', null, null)       ?: $this->limit;
+		$this->offset      = $request->get('offset', null, null)      ?: $this->offset;
+		$this->sort        = $request->get('sort', null, null)        ?: $this->sort;
+		$this->direction   = $request->get('direction', null, null)   ?: $this->direction;
+        $this->fields      = $request->get('fields', null, null)      ?: null;
 
 		// If there's a 'q' parameter, parse the fields, then determine that all the fields in the search
 		// are allowed to be searched from $allowedFields['search']
@@ -182,7 +182,7 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
 			$this->partialFields = $this->parsePartialFields($this->fields);
 
 			// Determines if fields is a strict subset of allowed fields
-			if(array_diff($this->partialFields, $this->allowedFields['partials'])){
+			if(array_diff($this->partialFields, $this->allowedFields['columns'])){
 				throw new HTTPException(
 					"The fields you asked for cannot be returned.",
 					401,
@@ -290,7 +290,7 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
             'sort'      => $this->sort,
             'direction' => $this->direction,
             'search'    => $this->searchFields,
-            'fields'    => explode(',', $this->fields), // TODO:: Explode this higher up and handel allowed fields properly
+            'fields'    => $this->partialFields,
             'records'   => $records
         ));
 
@@ -421,7 +421,7 @@ class RESTController extends \OrganicRest\Controllers\BaseController{
         $state['offset']      = $this->offset;
         $state['sort']        = $this->sort;
         $state['direction']   = $this->direction;
-        $state['fields']      = $this->fields ?: '*';
+        $state['fields']      = $this->partialFields ?: '*';
         $state['search']      = $search;
 
         return $state;
