@@ -79,7 +79,7 @@ API Assumptions
 
 ```
 base.tld/collection?search=(search1:value1,search2:value2)&fields=(field1,field2,field3)&limit=10&offest=20&type=csv
-base.tld/resource/id&fields=(field1,field2,field3)
+base.tld/resource/id?fields=(field1,field2,field3)
 ```
 
 **Request Bodies**
